@@ -20,7 +20,7 @@ function handleJson() {
   const file = this.files[0];
   const reader = new FileReader();
   reader.onload = event => {
-    data = JSON.parse(reader.result).reverse().map(i => transformToMinimal(i));
+    data = JSON.parse(reader.result).map(i => transformToMinimal(i));
     redraw();
   };
   reader.readAsText(file);
