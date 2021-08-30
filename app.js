@@ -81,13 +81,14 @@ function doRollup(activityData) {
       newActivities.push(newActivity);
       let newStartDate = nextDate;
       while (nextDate <= timestamp) {
+        let possibleDate = nextDate;
         nextDate = getNextDate(nextDate);
-        newStartDate = nextDate;
         if (nextDate.getTime() != getNextDate(timestamp).getTime()) {
+          newStartDate = nextDate;
           newActivities.push({
             name: nextDate.toISOString().slice(0,10),
             distance: 0,
-            timestamp: nextDate,
+            timestamp: possibleDate,
             type: activity.type,
           });
         }
