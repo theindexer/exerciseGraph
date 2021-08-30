@@ -1,71 +1,38 @@
+var rollup = 'monthly';
+var data = [];
+
 function readActivities() {
   const swarmInput = document.getElementById('activityjson');
   swarmInput.addEventListener('change', handleJson, false);
+}
+
+function handleRollup() {
+  const rollupInput = document.getElementById('rollup');
+  rollupInput.addEventListener('change', (e) => {
+    rollup = e.target.value;
+    redraw();
+  });
+
+  
 }
 
 function handleJson() {
   const file = this.files[0];
   const reader = new FileReader();
   reader.onload = event => {
-    const data = JSON.parse(reader.result).reverse().map(i => transformToMinimal(i));
-    console.log(data);
-    Highcharts.chart('container',
-      {
-        title: {
-          text: 'Strava',
-        },
-        chart: {
-          zoomType: 'x',
-        },
-        xAxis: {
-          type: "datetime",
-        },
-        yAxis: [{
-          labels: {
-            format: '{value} miles',
-          },
-          title: {
-            text: 'Biking',
-          },
-          opposite: true,
-        }, {
-          labels: {
-            format: '{value} miles',
-          },
-          title: {
-            text: 'Running',
-          }
-        }, {
-          labels: {
-            format: '{value} yards',
-          },
-          title: {
-            text: 'Swimming',
-          }
-        }],
-
-        series: [{
-          type: 'line',
-          name: 'Bikes',
-          data: emptyDays(data.filter(d => d.type == 'Ride').map(d => transformToHighcharts(d, miles))),
-        }, {
-          type: 'line',
-          name: 'Runs',
-          yAxis: 1,
-          data: emptyDays(data.filter(d => d.type == 'Run').map(d => transformToHighcharts(d, miles))),
-          turboThreshold: 0,
-        }, {
-          type: 'line',
-          name: 'Swims',
-          yAxis: 2,
-          data: emptyDays(data.filter(d => d.type == 'Swim').map(d => transformToHighcharts(d, yards))),
-          turboThreshold: 0,
-        },
-
-        ],
-      });
+    data = JSON.parse(reader.result).reverse().map(i => transformToMinimal(i));
+    redraw();
   };
   reader.readAsText(file);
+}
+
+function redraw() {
+  chart.series[0].setData(
+      doRollup(data.filter(d => d.type == 'Ride')).map(d => transformToHighcharts(d, miles)));
+  chart.series[1].setData(
+      doRollup(data.filter(d => d.type == 'Run')).map(d => transformToHighcharts(d, miles)));
+  chart.series[2].setData(
+      doRollup(data.filter(d => d.type == 'Swim')).map(d => transformToHighcharts(d, yards)));
 }
 
 /**
@@ -94,31 +61,57 @@ function transformToHighcharts(minimal, distFunc) {
   };
 }
 
-function emptyDays(highchartSeries) {
-  let date = new Date(highchartSeries[0].x);
-  for (let i = 1; i < highchartSeries.length; i++) {
-    let tomorrow = getTomorrow(date);
-    if (date.getTime() == highchartSeries[i].x) {
-      continue;
-    } else if (tomorrow.getTime() == highchartSeries[i].x) {
-      date = tomorrow;
-      continue;
+function doRollup(activityData) {
+  if (activityData.length == 0) {
+    return activityData;
+  }
+  let earliestDate = activityData[0].timestamp;
+  let maxDate = activityData[activityData.length - 1];
+  let nextDate = getNextDate(earliestDate);
+
+  let newActivity = { ...activityData[0] };
+  var newActivities = [];
+  for (var i = 1; i < activityData.length; i++) {
+    const activity = activityData[i];
+    const timestamp = new Date(activity.timestamp.toDateString());
+    if (timestamp < nextDate) {
+      newActivity.distance += activity.distance;
+      newActivity.name += "<br>" + activity.name; 
     } else {
-      date = tomorrow;
-      const obj = {
-        x: date.getTime(),
-        y: 0,
-        name: 'Rest',
-      };
-      highchartSeries.splice(i, 0, obj);
+      newActivities.push(newActivity);
+      let newStartDate = nextDate;
+      while (nextDate <= timestamp) {
+        nextDate = getNextDate(nextDate);
+        newStartDate = nextDate;
+        if (nextDate.getTime() != getNextDate(timestamp).getTime()) {
+          newActivities.push({
+            name: nextDate.toISOString().slice(0,10),
+            distance: 0,
+            timestamp: nextDate,
+            type: activity.type,
+          });
+        }
+      }
+      newActivity = { ...activity };
+      newActivity.name = newStartDate.toISOString().slice(0,10) + "<br>"+ newActivity.name;
+      newActivity.timestamp = newStartDate;
     }
   }
-  return highchartSeries;
+  newActivities.push(newActivity);
+  return newActivities;
 }
 
-function getTomorrow(date) {
-  let newDate = new Date(date);
-  newDate.setDate(date.getDate() + 1);
+function getNextDate(timestamp) {
+  let newDate = new Date(timestamp.toDateString());
+  if (rollup == 'daily') {
+    newDate.setDate(newDate.getDate() + 1);
+  } else if (rollup == 'weekly') {
+    var curDate = newDate.getDay();
+    newDate.setDate(newDate.getDate() + 7 - curDate);
+  } else if (rollup == 'monthly') {
+    newDate.setDate(1);
+    newDate.setMonth(newDate.getMonth() + 1);
+  }
   return newDate;
 }
 
@@ -131,3 +124,60 @@ function yards(dist) {
 }
 
 readActivities();
+handleRollup();
+
+var chart = Highcharts.chart('container',
+  {
+    title: {
+      text: 'Strava',
+    },
+    chart: {
+      zoomType: 'x',
+    },
+    xAxis: {
+      type: "datetime",
+    },
+    yAxis: [{
+      labels: {
+        format: '{value} miles',
+      },
+      title: {
+        text: 'Biking',
+      },
+      opposite: true,
+    }, {
+      labels: {
+        format: '{value} miles',
+      },
+      title: {
+        text: 'Running',
+      }
+    }, {
+      labels: {
+        format: '{value} yards',
+      },
+      title: {
+        text: 'Swimming',
+      }
+    }],
+
+    series: [{
+      type: 'line',
+      name: 'Bikes',
+      data: [],
+    }, {
+      type: 'line',
+      name: 'Runs',
+      yAxis: 1,
+      data: [],
+      turboThreshold: 0,
+    }, {
+      type: 'line',
+      name: 'Swims',
+      yAxis: 2,
+      data: [],
+      turboThreshold: 0,
+    },
+
+    ],
+  });
