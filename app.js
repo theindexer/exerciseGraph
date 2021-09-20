@@ -108,6 +108,11 @@ function getNextDate(timestamp) {
     newDate.setDate(newDate.getDate() + 1);
   } else if (rollup == 'weekly') {
     var curDate = newDate.getDay();
+    // Strava week is Mon - Sun
+    if (curDate == 0) {
+      curDate = 7;
+    }
+    curDate -= 1;
     newDate.setDate(newDate.getDate() + 7 - curDate);
   } else if (rollup == 'monthly') {
     newDate.setDate(1);
