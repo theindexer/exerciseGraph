@@ -166,6 +166,13 @@ var chart = Highcharts.chart('container',
         text: 'Swimming',
       }
     }],
+    plotOptions: {
+      line: {
+        marker: {
+          enabled: true,
+        }
+      },
+    },
 
     series: [{
       type: 'line',
