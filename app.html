@@ -1,6 +1,48 @@
 <html>
   <head>
     <script src="https://code.highcharts.com/highcharts.src.js"></script>
+    <style>
+      ul {
+        list-style-type: none;
+      }
+      li:not(:last-child) {
+        margin-bottom: 3px;
+      }
+      a {
+        text-decoration: none;
+        color: #0000ff;
+      }
+      a:visited {
+        color: #70f;
+      }
+      .activity-row {
+        display: flex;
+      }
+      .activity-name {
+        font-size: 18px;
+        font-weight: bold;
+      }
+      .activity-icon {
+        background: url('fa-images.png') no-repeat;
+        background-size: contain;
+        height: 18px;
+        width: 18px;
+      }
+      .activity-distance {
+        margin: 0 5px 0 10px;
+        font-size: 16px;
+      }
+
+      .distance-far {
+        color: red;
+      }
+
+      .activity-time {
+        margin: 0 0 0 10px;
+        font-size: 14px;
+      }
+
+    </style>
   </head>
   <body>
     <div>
@@ -12,6 +54,10 @@
       <option value="monthly">Monthly</option>
     </select>
     <div id="container"></div>
+    <div>
+      <input id="run-filter" type="range" min="0" max="100" value="0"><span id="run-filter-display">0</span>
+    </div>
+    <div id="extra-info-container"></div>
     <script src="./app.js"></script>
   </body>
 </html>
