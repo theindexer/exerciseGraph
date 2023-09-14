@@ -104,7 +104,7 @@ function doRollup(activityData) {
     const timestamp = new Date(activity.timestamp.toDateString());
     if (timestamp < nextDate) {
       newActivity.distance += activity.distance;
-      newActivity.name += "<br>" + activity.name; 
+      newActivity.name += "<br>" + getActivityHtml(activity); 
       newActivity.ids.push(activity.ids[0])
     } else {
       newActivities.push(newActivity);
@@ -125,7 +125,7 @@ function doRollup(activityData) {
       }
       newActivity = { ...activity };
       newActivity.ids = [...newActivity.ids]
-      newActivity.name = newStartDate.toISOString().slice(0,10) + "<br>"+ newActivity.name;
+      newActivity.name = newStartDate.toISOString().slice(0,10) + "<br>"+ getActivityHtml(newActivity);
       newActivity.timestamp = newStartDate;
     }
     if (miles(activity.distance) > minDistance) {
@@ -136,6 +136,15 @@ function doRollup(activityData) {
   }
   newActivities.push(newActivity);
   return newActivities;
+}
+
+function getActivityHtml(activity) {
+  name = activity.name;
+  console.log(activity.hasPhotos);
+  if (activity.hasPhotos) {
+    name += " (photos)";
+  }
+  return name;
 }
 
 function getNextDate(timestamp) {
